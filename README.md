@@ -1,6 +1,6 @@
 # Snake Game for 404 Page 🐱🐾
 
-*© 2024 YourName 🐱🐾*
+*© 2024 Yuriy Ostyuchenko 🐱🐾*
 
 ## Table of Contents
 
