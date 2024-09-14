@@ -1,0 +1,447 @@
+<!-- 
+*© 2024 Yuriy Ostyuchenko 🐱🐾*
+*Snake Game for 404 Page*
+*Создано с любовью для улучшения пользовательского опыта*
+-->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Страница не найдена (404)</title>
+    <style>
+        /* Основные стили страницы */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000; /* Черный фон */
+            color: #fff; /* Белый текст */
+            font-family: 'Press Start 2P', cursive; /* 8-битный стиль шрифта */
+            overflow: hidden; /* Скрыть полосы прокрутки */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh; /* Высота экрана */
+            position: relative;
+        }
+
+        /* Заголовок страницы */
+        h1 {
+            margin-bottom: 20px;
+            font-size: 2em;
+            text-align: center;
+        }
+
+        /* Канвас для игры */
+        #gameCanvas {
+            border: 2px solid #fff; /* Белая рамка */
+            background-color: #111; /* Темно-серый фон канваса */
+            display: none; /* Изначально скрыт */
+        }
+
+        /* Сообщения об игровом процессе */
+        #message, #promoCode, #bestScore {
+            margin-top: 10px;
+            font-size: 1em;
+            text-align: center;
+        }
+
+        /* Стиль промокода */
+        #promoCode {
+            color: #0f0; /* Зеленый цвет */
+        }
+
+        /* Лучший результат */
+        #bestScore {
+            color: #ff0; /* Желтый цвет */
+        }
+
+        /* Блок с правилами игры */
+        #rules {
+            margin-bottom: 20px;
+            max-width: 600px;
+            text-align: center;
+            font-size: 0.8em;
+            line-height: 1.5;
+        }
+
+        /* Кнопка начала игры */
+        #startButton {
+            padding: 10px 20px;
+            font-size: 1em;
+            background-color: #0f0; /* Зеленый фон */
+            color: #000; /* Черный текст */
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Ховер эффект для кнопки */
+        #startButton:hover {
+            background-color: #0c0; /* Темно-зеленый фон при наведении */
+        }
+
+        /* Эффект вспышки при сборе еды */
+        .flash {
+            animation: flashEffect 0.2s;
+        }
+
+        /* Ключевые кадры для анимации вспышки */
+        @keyframes flashEffect {
+            0% { background-color: #111; }
+            50% { background-color: #222; }
+            100% { background-color: #111; }
+        }
+
+        /* Импорт 8-битного шрифта */
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        /* Стили для мобильных кнопок управления */
+        #controls {
+            display: none; /* Скрыто по умолчанию, отображается на мобильных */
+            margin-top: 20px;
+        }
+
+        /* Кнопки управления */
+        .control-button {
+            width: 60px;
+            height: 60px;
+            margin: 5px;
+            background-color: #0f0; /* Зеленый фон */
+            color: #000; /* Черный текст */
+            border: none;
+            font-size: 1.5em;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        /* Ховер эффект для кнопок */
+        .control-button:active {
+            background-color: #0c0; /* Темно-зеленый фон при нажатии */
+        }
+
+        /* Адаптивные стили для мобильных устройств */
+        @media (max-width: 600px) {
+            #controls {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .control-row {
+                display: flex;
+                justify-content: center;
+            }
+
+            /* Адаптивные размеры канваса */
+            #gameCanvas {
+                width: 80vw;
+                height: 80vw;
+                max-width: 400px;
+                max-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Ой! Страница не найдена (404)</h1>
+    
+    <!-- Блок с правилами игры и кнопкой начала -->
+    <div id="rules">
+        <p><strong>Правила игры "Змейка":</strong></p>
+        <ul style="list-style: none; padding: 0;">
+            <li>Используйте стрелки на клавиатуре или кнопки на экране для управления змейкой.</li>
+            <li>Собирайте красные блоки, чтобы расти и набирать очки.</li>
+            <li>Каждые 5 собранных блоков змейка ускоряется.</li>
+            <li>Соберите 30 блоков для получения промокода на 1% скидку, 60 блоков — на 2% и так далее до 5%.</li>
+            <li>Избегайте столкновений с границами и собственным телом.</li>
+            <li>Лучший результат сохраняется и отображается для вашего удобства.</li>
+        </ul>
+        <button id="startButton">Начать игру</button>
+    </div>
+    
+    <!-- Канвас для отображения игры -->
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    
+    <!-- Сообщения о ходе игры -->
+    <div id="message"></div>
+    <div id="promoCode"></div>
+    <div id="bestScore"></div>
+
+    <!-- Контролы для мобильных устройств -->
+    <div id="controls">
+        <div class="control-row">
+            <button class="control-button" id="upButton">↑</button>
+        </div>
+        <div class="control-row">
+            <button class="control-button" id="leftButton">←</button>
+            <button class="control-button" id="downButton">↓</button>
+            <button class="control-button" id="rightButton">→</button>
+        </div>
+    </div>
+
+    <script>
+        // Загрузка аудио файлов
+        const eatSound = new Audio('https://freesound.org/data/previews/341/341695_5260877-lq.mp3'); // Звук сбора еды
+        const gameOverSound = new Audio('https://freesound.org/data/previews/331/331912_3248244-lq.mp3'); // Звук окончания игры
+        const bgMusic = new Audio('https://freesound.org/data/previews/256/256113_4486188-lq.mp3'); // Фоновая 8-битная музыка
+
+        bgMusic.loop = true; // Зацикливание фоновой музыки
+
+        // Получение элементов канваса и контекста
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const box = 20; // Размер одной ячейки змейки и еды
+        let snake; // Массив для хранения координат змейки
+        let direction; // Текущее направление движения змейки
+        let food; // Координаты еды
+        let score; // Текущий счет
+        let speed; // Текущая скорость игры (интервал в миллисекундах)
+        let gameInterval; // Интервал для обновления игры
+
+        // Объект с промокодами и соответствующими скидками
+        const promoCodes = {
+            30: 'JKDFCHDN',
+            60: 'LMNOPQRS',
+            90: 'ZXCVBNML',
+            120: 'ASDFGHJK',
+            150: 'QWERTYUI'
+        };
+
+        /**
+         * Обработчик нажатий клавиш для управления змейкой
+         * @param {KeyboardEvent} event - Событие нажатия клавиши
+         */
+        function changeDirection(event) {
+            const key = event.keyCode;
+            if (key === 37 && direction !== 'RIGHT') direction = 'LEFT'; // Влево
+            else if (key === 38 && direction !== 'DOWN') direction = 'UP'; // Вверх
+            else if (key === 39 && direction !== 'LEFT') direction = 'RIGHT'; // Вправо
+            else if (key === 40 && direction !== 'UP') direction = 'DOWN'; // Вниз
+        }
+
+        // Добавление обработчика событий для клавиатуры
+        document.addEventListener('keydown', changeDirection);
+
+        /**
+         * Обработчики кнопок управления для мобильных устройств
+         */
+        document.getElementById('upButton').addEventListener('click', () => {
+            if (direction !== 'DOWN') direction = 'UP';
+        });
+
+        document.getElementById('leftButton').addEventListener('click', () => {
+            if (direction !== 'RIGHT') direction = 'LEFT';
+        });
+
+        document.getElementById('downButton').addEventListener('click', () => {
+            if (direction !== 'UP') direction = 'DOWN';
+        });
+
+        document.getElementById('rightButton').addEventListener('click', () => {
+            if (direction !== 'LEFT') direction = 'RIGHT';
+        });
+
+        /**
+         * Функция инициализации игры
+         */
+        function initGame() {
+            // Скрыть блок с правилами и кнопкой начала
+            document.getElementById('rules').style.display = 'none';
+            // Показать канвас для игры
+            canvas.style.display = 'block';
+            // Показать контролы на мобильных устройствах
+            if (window.innerWidth <= 600) {
+                document.getElementById('controls').style.display = 'flex';
+                document.getElementById('controls').style.flexDirection = 'column';
+                document.getElementById('controls').style.alignItems = 'center';
+            }
+            // Инициализация змейки
+            snake = [{x: 9 * box, y: 10 * box}]; // Начальная позиция змейки
+            direction = 'RIGHT'; // Начальное направление
+            food = generateFood(); // Генерация первой еды
+            score = 0; // Обнуление счета
+            speed = 200; // Установка начальной скорости
+            // Очистка сообщений промокодов и счетчика
+            document.getElementById('promoCode').innerText = '';
+            document.getElementById('message').innerText = `Собрано блоков: ${score}`;
+            // Отображение лучшего результата
+            displayBestScore();
+            // Воспроизведение фоновой музыки
+            bgMusic.play();
+            // Запуск игрового цикла
+            gameInterval = setInterval(draw, speed);
+        }
+
+        // Добавление обработчика события для кнопки начала игры
+        document.getElementById('startButton').addEventListener('click', initGame);
+
+        /**
+         * Функция отрисовки игры
+         */
+        function draw() {
+            // Очистка канваса и заполнение его цветом фона
+            ctx.fillStyle = '#111';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Отрисовка змейки
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = (i === 0) ? '#0f0' : '#fff'; // Голова змейки зеленая, тело белое
+                ctx.fillRect(snake[i].x, snake[i].y, box, box); // Рисование квадрата змейки
+                ctx.strokeStyle = '#000'; // Черная обводка
+                ctx.strokeRect(snake[i].x, snake[i].y, box, box); // Рисование обводки
+            }
+
+            // Отрисовка еды
+            ctx.fillStyle = '#f00'; // Красный цвет
+            ctx.fillRect(food.x, food.y, box, box); // Рисование квадрата еды
+
+            // Получение текущей позиции головы змейки
+            let snakeX = snake[0].x;
+            let snakeY = snake[0].y;
+
+            // Обновление позиции головы змейки в зависимости от направления
+            if (direction === 'LEFT') snakeX -= box;
+            if (direction === 'UP') snakeY -= box;
+            if (direction === 'RIGHT') snakeX += box;
+            if (direction === 'DOWN') snakeY += box;
+
+            // Создание новой головы змейки
+            let newHead = {x: snakeX, y: snakeY};
+
+            // Проверка на столкновение с границами или самим собой
+            if (snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(newHead, snake)) {
+                // Воспроизведение звука окончания игры
+                gameOverSound.play();
+                // Остановка игрового цикла
+                clearInterval(gameInterval);
+                // Пауза фоновой музыки
+                bgMusic.pause();
+                // Отображение сообщения о завершении игры
+                document.getElementById('message').innerText = 'Игра окончена! Попробуйте снова.';
+                // Показать кнопку начала игры
+                document.getElementById('startButton').style.display = 'block';
+                // Скрыть канвас и контролы
+                canvas.style.display = 'none';
+                document.getElementById('controls').style.display = 'none';
+                // Показать блок с правилами
+                document.getElementById('rules').style.display = 'block';
+                // Обновление лучшего результата
+                updateBestScore();
+                return; // Выход из функции
+            }
+
+            // Проверка на сбор еды
+            if (snakeX === food.x && snakeY === food.y) {
+                // Воспроизведение звука сбора еды
+                eatSound.currentTime = 0;
+                eatSound.play();
+                // Увеличение счета
+                score++;
+                // Добавление новой головы змейки без удаления хвоста (увеличение длины)
+                snake.unshift(newHead);
+                // Генерация новой еды
+                food = generateFood();
+                // Визуальный эффект вспышки
+                flashEffect();
+
+                // Ускорение змейки каждые 5 собранных блоков
+                if (score % 5 === 0 && speed > 50) {
+                    clearInterval(gameInterval); // Остановка текущего интервала
+                    speed -= 20; // Увеличение скорости
+                    gameInterval = setInterval(draw, speed); // Запуск нового интервала с обновленной скоростью
+                }
+
+                // Проверка на получение промокода
+                if (promoCodes[score]) {
+                    document.getElementById('promoCode').innerText = `Поздравляем! Ваш промокод: ${promoCodes[score]} на скидку ${score / 30}%.`;
+                }
+            } else {
+                // Если еда не собрана, удаляем последний элемент змейки
+                snake.pop();
+                // Добавляем новую голову
+                snake.unshift(newHead);
+            }
+
+            // Обновление сообщения о текущем счете
+            document.getElementById('message').innerText = `Собрано блоков: ${score}`;
+        }
+
+        /**
+         * Функция проверки столкновения головы змейки с телом
+         * @param {Object} head - Координаты головы змейки
+         * @param {Array} array - Массив координат тела змейки
+         * @returns {boolean} - Возвращает true, если произошло столкновение
+         */
+        function collision(head, array) {
+            for (let i = 0; i < array.length; i++) {
+                if (head.x === array[i].x && head.y === array[i].y) {
+                    return true; // Столкновение обнаружено
+                }
+            }
+            return false; // Столкновений нет
+        }
+
+        /**
+         * Функция генерации новой еды на свободной клетке
+         * @returns {Object} - Координаты новой еды
+         */
+        function generateFood() {
+            let newFood;
+            let collisionDetected;
+            do {
+                newFood = {
+                    x: Math.floor(Math.random() * (canvas.width / box)) * box, // Случайная координата по X
+                    y: Math.floor(Math.random() * (canvas.height / box)) * box // Случайная координата по Y
+                };
+                collisionDetected = collision(newFood, snake); // Проверка на столкновение с телом змейки
+            } while (collisionDetected); // Повторять до тех пор, пока еда не окажется на свободной клетке
+            return newFood;
+        }
+
+        /**
+         * Функция визуального эффекта вспышки экрана при сборе еды
+         */
+        function flashEffect() {
+            document.body.classList.add('flash'); // Добавление класса для анимации
+            setTimeout(() => {
+                document.body.classList.remove('flash'); // Удаление класса после завершения анимации
+            }, 200); // Длительность анимации в миллисекундах
+        }
+
+        // Добавление стилей для эффекта вспышки (если еще не добавлено)
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .flash {
+                animation: flashEffect 0.2s;
+            }
+        `;
+        document.head.appendChild(style);
+
+        /**
+         * Функция отображения лучшего результата, сохраненного в localStorage
+         */
+        function displayBestScore() {
+            const bestScore = localStorage.getItem('bestScore') || 0; // Получение лучшего результата или 0
+            document.getElementById('bestScore').innerText = `Лучший результат: ${bestScore}`;
+        }
+
+        /**
+         * Функция обновления лучшего результата в localStorage
+         */
+        function updateBestScore() {
+            const bestScore = localStorage.getItem('bestScore') || 0; // Получение текущего лучшего результата
+            if (score > bestScore) { // Сравнение с текущим счетом
+                localStorage.setItem('bestScore', score); // Обновление лучшего результата
+                document.getElementById('bestScore').innerText = `Лучший результат: ${score}`; // Отображение нового лучшего результата
+                alert('Новый рекорд!'); // Уведомление пользователя
+            }
+        }
+    </script>
+</body>
+</html>
