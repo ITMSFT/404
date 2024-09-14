@@ -35,8 +35,6 @@
 
 ## Установка
 
-1. **Клонирование репозитория:**
-
 встасить код в error.html или другой
 
 ## Использование
@@ -59,8 +57,8 @@
 Этот проект лицензирован под MIT License.
 
 ## Контакты
-Ваше Имя
-Email: your.email@example.com
-GitHub: YourUsername
-Website: yourwebsite.com
+Yuriy Ostyuchenko
+Email: yuriy@itmsft.net
+GitHub: ostyuchenko
+Website: ostyuchenko.com itmsft.com
 
